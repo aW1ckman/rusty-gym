@@ -1,8 +1,12 @@
-use crate::core::spaces::Space;
+use crate::core::{
+    environment::{Environment, StepResult},
+    spaces::Space,
+};
 use std::convert::TryFrom;
 
 pub struct GridWorld {
     grid_size: (usize, usize),
+    start_pos: (usize, usize),
     agent_pos: (usize, usize),
     goal_pos: (usize, usize),
     steps: usize,
@@ -14,6 +18,7 @@ impl Default for GridWorld {
     fn default() -> Self {
         GridWorld {
             grid_size: (5, 5),
+            start_pos: (0, 0),
             agent_pos: (0, 0),
             goal_pos: (4, 4),
             steps: 0,
@@ -26,18 +31,47 @@ impl Default for GridWorld {
 impl GridWorld {
     pub fn new(
         grid_size: (usize, usize),
-        agent_pos: (usize, usize),
+        start_pos: (usize, usize),
         goal_pos: (usize, usize),
         max_steps: usize,
     ) -> Self {
         GridWorld {
             grid_size,
-            agent_pos,
+            start_pos,
+            agent_pos: start_pos,
             goal_pos,
             steps: 0,
             max_steps,
             terminated: false,
         }
+    }
+}
+
+impl Environment for GridWorld {
+    fn reset(&mut self) -> Vec<f32> {
+        self.agent_pos = self.start_pos;
+        self.steps = 0;
+        self.terminated = false;
+
+        let norm_x: f32 = self.agent_pos.0 as f32 / (self.grid_size.0 - 1) as f32;
+        let norm_y: f32 = self.agent_pos.1 as f32 / (self.grid_size.1 - 1) as f32;
+        vec![norm_x, norm_y]
+    }
+
+    fn is_terminal(&self) -> bool {
+        self.terminated
+    }
+    fn action_space(&self) -> &Space {
+        unimplemented!()
+    }
+    fn name(&self) -> &str {
+        unimplemented!()
+    }
+    fn observation_space(&self) -> &Space {
+        unimplemented!()
+    }
+    fn step(&mut self, action: usize) -> StepResult {
+        unimplemented!()
     }
 }
 
