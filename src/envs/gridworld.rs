@@ -69,14 +69,17 @@ impl Environment for GridWorld {
     fn is_terminal(&self) -> bool {
         self.terminated || self.truncated
     }
-    fn action_space(&self) -> &Space {
-        unimplemented!()
+    fn action_space(&self) -> Space {
+        Space::Discrete(4)
     }
     fn name(&self) -> &str {
-        unimplemented!()
+        "GridWorld"
     }
-    fn observation_space(&self) -> &Space {
-        unimplemented!()
+    fn observation_space(&self) -> Space {
+        Space::Box {
+            low: vec![0.0, 0.0],
+            high: vec![1.0, 1.0],
+        }
     }
     fn step(&mut self, action: usize) -> StepResult {
         let reward;
