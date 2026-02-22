@@ -12,6 +12,7 @@ pub struct GridWorld {
     steps: usize,
     max_steps: usize,
     terminated: bool,
+    truncated: bool,
 }
 
 impl Default for GridWorld {
@@ -24,6 +25,7 @@ impl Default for GridWorld {
             steps: 0,
             max_steps: 100,
             terminated: false,
+            truncated: false,
         }
     }
 }
@@ -43,7 +45,14 @@ impl GridWorld {
             steps: 0,
             max_steps,
             terminated: false,
+            truncated: false,
         }
+    }
+
+    fn get_observation(&self) -> Vec<f32> {
+        let norm_x: f32 = self.agent_pos.0 as f32 / (self.grid_size.0 - 1) as f32;
+        let norm_y: f32 = self.agent_pos.1 as f32 / (self.grid_size.1 - 1) as f32;
+        vec![norm_x, norm_y]
     }
 }
 
@@ -52,14 +61,13 @@ impl Environment for GridWorld {
         self.agent_pos = self.start_pos;
         self.steps = 0;
         self.terminated = false;
+        self.truncated = false;
 
-        let norm_x: f32 = self.agent_pos.0 as f32 / (self.grid_size.0 - 1) as f32;
-        let norm_y: f32 = self.agent_pos.1 as f32 / (self.grid_size.1 - 1) as f32;
-        vec![norm_x, norm_y]
+        self.get_observation()
     }
 
     fn is_terminal(&self) -> bool {
-        self.terminated
+        self.terminated || self.truncated
     }
     fn action_space(&self) -> &Space {
         unimplemented!()
@@ -71,7 +79,48 @@ impl Environment for GridWorld {
         unimplemented!()
     }
     fn step(&mut self, action: usize) -> StepResult {
-        unimplemented!()
+        let reward;
+        let grid_action_option = GridWorldAction::try_from(action);
+        let grid_action = match grid_action_option {
+            Ok(action) => action,
+            Err(_) => {
+                return StepResult {
+                    observation: self.get_observation(),
+                    reward: 0.0,
+                    terminated: self.terminated,
+                    truncated: self.truncated,
+                };
+            }
+        };
+
+        self.steps += 1;
+        match grid_action {
+            GridWorldAction::Left => self.agent_pos.0 = self.agent_pos.0.saturating_sub(1),
+            GridWorldAction::Right => {
+                self.agent_pos.0 = (self.agent_pos.0 + 1).min(self.grid_size.0 - 1)
+            }
+            GridWorldAction::Up => {
+                self.agent_pos.1 = (self.agent_pos.1 + 1).min(self.grid_size.1 - 1)
+            }
+            GridWorldAction::Down => self.agent_pos.1 = self.agent_pos.1.saturating_sub(1),
+        }
+
+        if self.agent_pos == self.goal_pos {
+            reward = 1.0;
+            self.terminated = true;
+        } else if self.steps >= self.max_steps {
+            reward = -1.0;
+            self.truncated = true;
+        } else {
+            reward = -0.01;
+        }
+
+        StepResult {
+            observation: self.get_observation(),
+            reward,
+            terminated: self.terminated,
+            truncated: self.truncated,
+        }
     }
 }
 
