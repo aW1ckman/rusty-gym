@@ -147,3 +147,95 @@ impl TryFrom<usize> for GridWorldAction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_reset() {
+        let mut env = GridWorld::default();
+        env.reset();
+        assert_eq!(env.steps, 0);
+        assert!(!env.terminated);
+        assert!(!env.truncated);
+    }
+
+    #[test]
+    fn test_step_valid() {
+        let mut env = GridWorld::default();
+        let result = env.step(3);
+        assert_eq!(result.observation, vec![0.25, 0.0]);
+        assert_eq!(result.reward, -0.01);
+        assert!(!result.terminated);
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn test_step_boundary_left() {
+        let mut env = GridWorld::default();
+        let result = env.step(2);
+        assert_eq!(result.observation, vec![0.0, 0.0]);
+        assert_eq!(result.reward, -0.01);
+        assert!(!result.terminated);
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn test_step_boundary_right() {
+        let mut env = GridWorld::default();
+        env.step(3);
+        env.step(3);
+        env.step(3);
+        env.step(3);
+        let result = env.step(3);
+        assert_eq!(result.observation, vec![1.0, 0.0]);
+        assert_eq!(result.reward, -0.01);
+        assert!(!result.terminated);
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn test_step_boundary_down() {
+        let mut env = GridWorld::default();
+        let result = env.step(1);
+        assert_eq!(result.observation, vec![0.0, 0.0]);
+        assert_eq!(result.reward, -0.01);
+        assert!(!result.terminated);
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn test_step_boundary_up() {
+        let mut env = GridWorld::default();
+        env.step(0);
+        env.step(0);
+        env.step(0);
+        env.step(0);
+        let result = env.step(0);
+        assert_eq!(result.observation, vec![0.0, 1.0]);
+        assert_eq!(result.reward, -0.01);
+        assert!(!result.terminated);
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn test_goal_reached() {
+        let mut env = GridWorld::new((2, 2), (0, 0), (1, 1), 100);
+        env.step(0);
+        let result = env.step(3);
+        assert!(result.terminated);
+        assert_eq!(result.reward, 1.0);
+    }
+
+    #[test]
+    fn test_max_steps() {
+        let mut env = GridWorld::new((5, 5), (0, 0), (4, 4), 4);
+        env.step(0);
+        env.step(1);
+        env.step(2);
+        let result = env.step(3);
+        assert!(result.truncated);
+        assert_eq!(result.reward, -1.0);
+    }
+}
