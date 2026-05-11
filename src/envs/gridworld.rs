@@ -13,6 +13,7 @@ pub struct GridWorld {
     max_steps: usize,
     terminated: bool,
     truncated: bool,
+    obs_labels: Vec<String>,
 }
 
 impl Default for GridWorld {
@@ -26,6 +27,10 @@ impl Default for GridWorld {
             max_steps: 100,
             terminated: false,
             truncated: false,
+            obs_labels: vec![
+                "x".to_string(),
+                "y".to_string(),
+            ],
         }
     }
 }
@@ -46,6 +51,10 @@ impl GridWorld {
             max_steps,
             terminated: false,
             truncated: false,
+            obs_labels: vec![
+                "x".to_string(),
+                "y".to_string(),
+            ],
         }
     }
 
@@ -79,6 +88,7 @@ impl Environment for GridWorld {
         Space::Box {
             low: vec![0.0, 0.0],
             high: vec![1.0, 1.0],
+            labels: self.obs_labels.clone(),
         }
     }
     fn step(&mut self, action: usize) -> StepResult {
