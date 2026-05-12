@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_max_steps() {
+    fn test_step_count_threshold() {
         let mut env = GridWorld::new((5, 5), (0, 0), (4, 4), 4);
         env.step(0);
         env.step(1);

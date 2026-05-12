@@ -103,12 +103,13 @@ impl Environment for CartPole {
         self.pole_angle += TIMESTEP * self.pole_vel;
         self.pole_vel += TIMESTEP * theta_ddot;
 
+        if self.steps >= 500 {
+            self.truncated = true;
+        }
+
         if (self.pole_angle.abs() > 12.0_f32.to_radians()) || (self.cart_pos.abs() > 2.4) {
             self.terminated = true;
             reward = 0.0;
-        } else if self.steps >= 500 {
-            self.truncated = true;
-            reward = 1.0;
         } else {
             reward = 1.0;
         }
@@ -158,5 +159,114 @@ impl TryFrom<usize> for CartPoleAction {
             1 => Ok(CartPoleAction::Right),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    impl CartPole {
+        fn fixed_vals() -> Self {
+            // Used for confirming calculations
+            CartPole {
+                cart_pos: 1.0,
+                cart_vel: 0.5,
+                pole_angle: 0.0,
+                pole_vel: 0.5,
+                steps: 0,
+                terminated: false,
+                truncated: false,
+                obs_labels: vec![
+                    "cart_pos".to_string(),
+                    "cart_vel".to_string(),
+                    "pole_angle".to_string(),
+                    "pole_vel".to_string(),
+                ],
+            }
+        }
+    }
+
+    #[test]
+    fn test_reset() {
+        let mut env = CartPole::default();
+        env.reset();
+        assert_eq!(env.steps, 0);
+        assert!(!env.terminated);
+        assert!(!env.truncated);
+        assert!(env.cart_pos < 0.05);
+        assert!(env.cart_pos > -0.05);
+        assert!(env.cart_vel < 0.05);
+        assert!(env.cart_vel > -0.05);
+        assert!(env.pole_angle < 0.05);
+        assert!(env.pole_angle > -0.05);
+        assert!(env.pole_vel < 0.05);
+        assert!(env.pole_vel > -0.05);
+    }
+
+    #[test]
+    fn test_step_result() {
+        let mut env = CartPole::fixed_vals();
+        // Left
+        let step_res = env.step(0);
+        assert!(step_res.observation[0] == 1.01);
+        assert!(step_res.observation[2] == 0.01);
+        assert!((step_res.observation[1] - 0.3049).abs() < 1e-4);
+        assert!((step_res.observation[3] - 0.7927).abs() < 1e-4);
+        assert!(!step_res.truncated);
+        assert!(!step_res.terminated);
+        assert_eq!(step_res.reward, 1.0);
+    }
+
+    #[test]
+    fn test_invalid_action() {
+        let mut env = CartPole::fixed_vals();
+
+        let step_res = env.step(10);
+
+        /*
+        cart_pos: 1.0,
+        cart_vel: 0.5,
+        pole_angle: 0.0,
+        pole_vel: 0.5, 
+        */
+        assert!(step_res.observation[0] == 1.0);
+        assert!(step_res.observation[1] == 0.5);
+        assert!(step_res.observation[2] == 0.0);
+        assert!(step_res.observation[3] == 0.5);
+        assert!(!step_res.truncated);
+        assert!(!step_res.terminated);
+        assert_eq!(step_res.reward, 0.0);
+    }
+
+    #[test]
+    fn test_angle_threshold() {
+        let mut env = CartPole::fixed_vals();
+        env.pole_angle = 11.9_f32.to_radians();
+        let step_res = env.step(1);
+
+        assert!(step_res.terminated);
+        assert_eq!(step_res.reward, 0.0);
+    }
+
+    #[test]
+    fn test_cart_pos_threshold() {
+        let mut env = CartPole::fixed_vals();
+        env.cart_pos = 2.399;
+        let step_res = env.step(1);
+
+
+        assert!(step_res.terminated);
+        assert_eq!(step_res.reward, 0.0);
+    }
+    
+    #[test]
+    fn test_step_count_threshold() {
+        let mut env = CartPole::fixed_vals();
+        env.steps = 499;
+        let step_res = env.step(0);
+
+        assert!(step_res.truncated);
+        assert_eq!(step_res.reward, 1.0);
     }
 }
