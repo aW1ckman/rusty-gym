@@ -84,7 +84,7 @@ impl Environment for GridWorld {
     fn name(&self) -> &str {
         "GridWorld"
     }
-    fn observation_space(&self) -> Space {
+    fn observation_bounds(&self) -> Space {
         Space::Box {
             low: vec![0.0, 0.0],
             high: vec![1.0, 1.0],

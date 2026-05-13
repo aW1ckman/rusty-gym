@@ -11,6 +11,7 @@ const POLE_HALF_LENGTH: f32 = 0.5;
 const FORCE_MAGNITUDE: f32 = 10.0;
 const TIMESTEP: f32 = 0.02;
 
+const MAXSTEPS: usize = 500;
 pub struct CartPole {
     cart_pos: f32,
     cart_vel: f32,
@@ -24,7 +25,19 @@ pub struct CartPole {
 
 impl CartPole {
     pub fn new() -> Self {
-        let mut cart_pole = CartPole {
+        let mut cart_pole = Self::default();
+        cart_pole.reset();
+        cart_pole
+    }
+
+    fn get_observation(&self) -> Vec<f32> {
+        vec![self.cart_pos, self.cart_vel, self.pole_angle, self.pole_vel]
+    }
+}
+
+impl Default for CartPole {
+    fn default() -> Self {
+        CartPole {
             cart_pos: 0.0,
             cart_vel: 0.0,
             pole_angle: 0.0,
@@ -38,19 +51,7 @@ impl CartPole {
                 "pole_angle".to_string(),
                 "pole_vel".to_string(),
             ],
-        };
-        cart_pole.reset();
-        cart_pole
-    }
-
-    fn get_observation(&self) -> Vec<f32> {
-        vec![self.cart_pos, self.cart_vel, self.pole_angle, self.pole_vel]
-    }
-}
-
-impl Default for CartPole {
-    fn default() -> Self {
-        Self::new()
+        }
     }
 }
 
@@ -103,7 +104,7 @@ impl Environment for CartPole {
         self.pole_angle += TIMESTEP * self.pole_vel;
         self.pole_vel += TIMESTEP * theta_ddot;
 
-        if self.steps >= 500 {
+        if self.steps >= MAXSTEPS {
             self.truncated = true;
         }
 
@@ -127,7 +128,7 @@ impl Environment for CartPole {
         self.terminated || self.truncated
     }
 
-    fn observation_space(&self) -> Space {
+    fn observation_bounds(&self) -> Space {
         Space::Box {
             low: vec![-4.8, -f32::INFINITY, -0.418, -f32::INFINITY],
             high: vec![4.8, f32::INFINITY, 0.418, f32::INFINITY],
