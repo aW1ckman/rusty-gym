@@ -1,4 +1,4 @@
-use rand::{RngExt, seq::{IndexedRandom}};
+use rand::{RngExt, seq::IndexedRandom};
 
 use crate::core::{
     environment::{Environment, StepResult},
@@ -11,7 +11,7 @@ const BALLSIZE: f32 = 0.0125;
 
 const PADDLESPEED: f32 = 0.02;
 // Simulating: 20px paddle height (240px screen)
-const PADDLEHEIGHT: f32 = 20.0/240.0;
+const PADDLEHEIGHT: f32 = 20.0 / 240.0;
 const PADDLEWIDTH: f32 = 0.025;
 const PADDLEMARGIN: f32 = 0.04;
 
@@ -22,7 +22,6 @@ const CONCEDEREWARD: f32 = -1.0;
 
 const OPPONENTREACTION: f32 = 0.4;
 const OPPONENTERROR: f32 = 0.08;
-
 
 pub struct Pong {
     ball_x: f32,
@@ -46,13 +45,22 @@ impl Pong {
     }
 
     fn get_observation(&self) -> Vec<f32> {
-        vec![self.ball_x, self.ball_y, self.ball_vx, self.ball_vy, self.agent_paddle.paddle_y, self.opp_paddle.paddle_y]
+        vec![
+            self.ball_x,
+            self.ball_y,
+            self.ball_vx,
+            self.ball_vy,
+            self.agent_paddle.paddle_y,
+            self.opp_paddle.paddle_y,
+        ]
     }
 }
 
 impl Default for Pong {
     fn default() -> Self {
-        let opp = TrackingOpponent {rand: rand::make_rng()};
+        let opp = TrackingOpponent {
+            rand: rand::make_rng(),
+        };
         Pong {
             ball_x: 0.5,
             ball_y: 0.5,
@@ -97,17 +105,17 @@ impl Paddle {
     }
 
     fn move_paddle(&mut self, action: PongAction) {
-        // Top-left origin 
+        // Top-left origin
         match action {
-            PongAction::Stay => {},
-            PongAction::Up => self.paddle_y -= PADDLESPEED ,
+            PongAction::Stay => {}
+            PongAction::Up => self.paddle_y -= PADDLESPEED,
             PongAction::Down => self.paddle_y += PADDLESPEED,
         }
 
         if self.paddle_y < 0.0 {
             self.paddle_y = 0.0;
-        } else if self.paddle_y > 1.0-PADDLEHEIGHT {
-            self.paddle_y = 1.0-PADDLEHEIGHT
+        } else if self.paddle_y > 1.0 - PADDLEHEIGHT {
+            self.paddle_y = 1.0 - PADDLEHEIGHT
         }
     }
 
@@ -118,9 +126,9 @@ impl Paddle {
 
 impl Default for Paddle {
     fn default() -> Self {
-        Paddle { 
+        Paddle {
             paddle_y: 0.5,
-            paddle_x: 0.0, 
+            paddle_x: 0.0,
         }
     }
 }
@@ -136,7 +144,7 @@ pub struct TrackingOpponent {
 impl OpponentPolicy for TrackingOpponent {
     fn take_action(&mut self, ball_centre: f32, paddle_centre: f32) -> PongAction {
         if self.rand.random_range(0.0..=1.0) > OPPONENTREACTION {
-            return PongAction::Stay
+            return PongAction::Stay;
         }
         let diff = ball_centre - paddle_centre;
         if diff < -OPPONENTERROR {
@@ -153,13 +161,13 @@ impl Pong {
     fn update_ball(&mut self) {
         self.ball_x += self.ball_vx;
         self.ball_y += self.ball_vy;
-        
+
         // Top bottom wall collision
         if self.ball_y <= 0.0 {
             self.ball_y = 0.0;
             self.ball_vy = -self.ball_vy;
-        } else if self.ball_y >= 1.0-BALLSIZE {
-            self.ball_y = 1.0-BALLSIZE;
+        } else if self.ball_y >= 1.0 - BALLSIZE {
+            self.ball_y = 1.0 - BALLSIZE;
             self.ball_vy = -self.ball_vy
         }
     }
@@ -180,35 +188,35 @@ impl Pong {
             && self.ball_x <= self.agent_paddle.paddle_x + PADDLEWIDTH &&
             self.ball_x >= self.agent_paddle.paddle_x &&
             self.ball_y >= self.agent_paddle.paddle_y - BALLSIZE &&
-            self.ball_y <= self.agent_paddle.paddle_y + PADDLEHEIGHT {
-                
-                self.ball_x = self.agent_paddle.paddle_x + PADDLEWIDTH;
-                self.ball_vx = -self.ball_vx;
+            self.ball_y <= self.agent_paddle.paddle_y + PADDLEHEIGHT
+        {
+            self.ball_x = self.agent_paddle.paddle_x + PADDLEWIDTH;
+            self.ball_vx = -self.ball_vx;
 
-                // Vary angle based on hit position
-                let hitpos = self.ball_centre() - self.agent_paddle.get_paddle_centre();
-                self.ball_vy = hitpos * 0.1; // Offset -> velocity
-                self.clamp_ball_vy();
+            // Vary angle based on hit position
+            let hitpos = self.ball_centre() - self.agent_paddle.get_paddle_centre();
+            self.ball_vy = hitpos * 0.1; // Offset -> velocity
+            self.clamp_ball_vy();
 
-                // Agent hit ball
-                return PongEvent::AgentHit;
+            // Agent hit ball
+            return PongEvent::AgentHit;
         }
         // Ball moving right (to opponent)
         if self.ball_vx > 0.0
-            && self.ball_x + BALLSIZE >= self.opp_paddle.paddle_x &&
-            self.ball_x + BALLSIZE <= self.opp_paddle.paddle_x + PADDLEWIDTH &&
-            self.ball_y >= self.opp_paddle.paddle_y - BALLSIZE &&
-            self.ball_y <= self.opp_paddle.paddle_y + PADDLEHEIGHT {
+            && self.ball_x + BALLSIZE >= self.opp_paddle.paddle_x
+            && self.ball_x + BALLSIZE <= self.opp_paddle.paddle_x + PADDLEWIDTH
+            && self.ball_y >= self.opp_paddle.paddle_y - BALLSIZE
+            && self.ball_y <= self.opp_paddle.paddle_y + PADDLEHEIGHT
+        {
+            self.ball_x = self.opp_paddle.paddle_x - BALLSIZE;
+            self.ball_vx = -self.ball_vx;
 
-                self.ball_x = self.opp_paddle.paddle_x - BALLSIZE;
-                self.ball_vx = -self.ball_vx;
+            let hitpos = (self.ball_y + BALLSIZE / 2.0) - self.opp_paddle.get_paddle_centre();
+            self.ball_vy = hitpos * 0.1;
+            self.clamp_ball_vy();
 
-                let hitpos = (self.ball_y + BALLSIZE / 2.0) - self.opp_paddle.get_paddle_centre();
-                self.ball_vy = hitpos * 0.1;
-                self.clamp_ball_vy();
-
-                return PongEvent::OppHit
-            }
+            return PongEvent::OppHit;
+        }
         PongEvent::None
     }
 
@@ -241,7 +249,7 @@ impl Environment for Pong {
         self.ball_y = 0.5;
         // Random directions
         self.ball_vx = BALLSPEED * ([-1.0, 1.0].choose(&mut rand).unwrap());
-        self.ball_vy = rand.random_range((-BALLSPEED*0.5)..(BALLSPEED*0.5));
+        self.ball_vy = rand.random_range((-BALLSPEED * 0.5)..(BALLSPEED * 0.5));
 
         self.agent_paddle.reset();
         self.opp_paddle.reset();
@@ -254,7 +262,6 @@ impl Environment for Pong {
     }
 
     fn step(&mut self, action: usize) -> StepResult {
-        
         let pong_action_option = PongAction::try_from(action);
         let pong_action = match pong_action_option {
             Ok(action) => action,
@@ -270,10 +277,11 @@ impl Environment for Pong {
         self.steps += 1;
         // Move padels first
         self.agent_paddle.move_paddle(pong_action);
-        let opp_action = self.opp_actor.take_action(self.ball_centre(), self.opp_paddle.get_paddle_centre());
+        let opp_action = self
+            .opp_actor
+            .take_action(self.ball_centre(), self.opp_paddle.get_paddle_centre());
         self.opp_paddle.move_paddle(opp_action);
 
-        
         self.update_ball();
 
         let event = self.event_step();
@@ -289,7 +297,7 @@ impl Environment for Pong {
         if self.steps >= MAXSTEPS {
             self.truncated = true
         }
-        
+
         StepResult {
             observation: self.get_observation(),
             reward,
@@ -298,15 +306,15 @@ impl Environment for Pong {
         }
     }
 
-
     fn is_terminal(&self) -> bool {
         self.terminated || self.truncated
     }
 
     fn observation_bounds(&self) -> Space {
-        Space::Box { low: vec![0.0, 0.0, -BALLSPEED, -MAX_VY, 0.0, 0.0], 
-            high: vec![1.0, 1.0, BALLSPEED, MAX_VY, 1.0, 1.0], 
-            labels: self.obs_labels.clone(), 
+        Space::Box {
+            low: vec![0.0, 0.0, -BALLSPEED, -MAX_VY, 0.0, 0.0],
+            high: vec![1.0, 1.0, BALLSPEED, MAX_VY, 1.0, 1.0],
+            labels: self.obs_labels.clone(),
         }
     }
 
@@ -318,7 +326,6 @@ impl Environment for Pong {
         "Pong"
     }
 }
-
 
 pub enum PongAction {
     Stay = 0,
@@ -345,5 +352,5 @@ pub enum PongEvent {
     OppHit,
     AgentScore,
     OppScore,
-    None
+    None,
 }

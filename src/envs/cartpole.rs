@@ -1,8 +1,8 @@
-use rand::RngExt;
 use crate::core::{
     environment::{Environment, StepResult},
     spaces::Space,
 };
+use rand::RngExt;
 
 const GRAVITY: f32 = 9.8;
 const CART_MASS: f32 = 1.0;
@@ -58,10 +58,10 @@ impl Default for CartPole {
 impl Environment for CartPole {
     fn reset(&mut self) -> Vec<f32> {
         let mut rand = rand::rng();
-        self.cart_pos =  rand.random_range(-0.05..0.05);
-        self.cart_vel =  rand.random_range(-0.05..0.05);
-        self.pole_angle =  rand.random_range(-0.05..0.05);
-        self.pole_vel =  rand.random_range(-0.05..0.05);
+        self.cart_pos = rand.random_range(-0.05..0.05);
+        self.cart_vel = rand.random_range(-0.05..0.05);
+        self.pole_angle = rand.random_range(-0.05..0.05);
+        self.pole_vel = rand.random_range(-0.05..0.05);
         self.steps = 0;
         self.terminated = false;
         self.truncated = false;
@@ -90,13 +90,18 @@ impl Environment for CartPole {
         };
         let total_mass = CART_MASS + POLE_MASS;
         // Intermediary accelertation calculation
-        let temp: f32 = (force + POLE_MASS * POLE_HALF_LENGTH * self.pole_vel.powi(2) * self.pole_angle.sin()) / total_mass;
+        let temp: f32 = (force
+            + POLE_MASS * POLE_HALF_LENGTH * self.pole_vel.powi(2) * self.pole_angle.sin())
+            / total_mass;
 
         // Angular acceleration
-        let theta_ddot = (GRAVITY * self.pole_angle.sin() - self.pole_angle.cos() * temp) / (POLE_HALF_LENGTH * (4.0/3.0 - POLE_MASS * self.pole_angle.cos().powi(2) / total_mass));
+        let theta_ddot = (GRAVITY * self.pole_angle.sin() - self.pole_angle.cos() * temp)
+            / (POLE_HALF_LENGTH
+                * (4.0 / 3.0 - POLE_MASS * self.pole_angle.cos().powi(2) / total_mass));
 
-        // Cart acceleration 
-        let x_ddot = temp - POLE_MASS * POLE_HALF_LENGTH * theta_ddot * self.pole_angle.cos() / total_mass;
+        // Cart acceleration
+        let x_ddot =
+            temp - POLE_MASS * POLE_HALF_LENGTH * theta_ddot * self.pole_angle.cos() / total_mass;
 
         // Euler integration
         self.cart_pos += TIMESTEP * self.cart_vel;
@@ -121,7 +126,6 @@ impl Environment for CartPole {
             terminated: self.terminated,
             truncated: self.truncated,
         }
-
     }
 
     fn is_terminal(&self) -> bool {
@@ -144,7 +148,6 @@ impl Environment for CartPole {
         "CartPole"
     }
 }
-
 
 pub enum CartPoleAction {
     Left = 0,
@@ -229,7 +232,7 @@ mod test {
         cart_pos: 1.0,
         cart_vel: 0.5,
         pole_angle: 0.0,
-        pole_vel: 0.5, 
+        pole_vel: 0.5,
         */
         assert!(step_res.observation[0] == 1.0);
         assert!(step_res.observation[1] == 0.5);
@@ -256,11 +259,10 @@ mod test {
         env.cart_pos = 2.399;
         let step_res = env.step(1);
 
-
         assert!(step_res.terminated);
         assert_eq!(step_res.reward, 0.0);
     }
-    
+
     #[test]
     fn test_step_count_threshold() {
         let mut env = CartPole::fixed_vals();

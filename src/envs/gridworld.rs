@@ -27,10 +27,7 @@ impl Default for GridWorld {
             max_steps: 100,
             terminated: false,
             truncated: false,
-            obs_labels: vec![
-                "x".to_string(),
-                "y".to_string(),
-            ],
+            obs_labels: vec!["x".to_string(), "y".to_string()],
         }
     }
 }
@@ -51,10 +48,7 @@ impl GridWorld {
             max_steps,
             terminated: false,
             truncated: false,
-            obs_labels: vec![
-                "x".to_string(),
-                "y".to_string(),
-            ],
+            obs_labels: vec!["x".to_string(), "y".to_string()],
         }
     }
 
