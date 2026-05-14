@@ -166,11 +166,7 @@ impl Pong {
 
     fn clamp_ball_vy(&mut self) {
         // Clamp VY to always be at most MAX_VY
-        if self.ball_vy > MAX_VY {
-            self.ball_vy = MAX_VY
-        } else if self.ball_vy < -MAX_VY {
-            self.ball_vy = -MAX_VY
-        }
+        self.ball_vy = self.ball_vy.clamp(-MAX_VY, MAX_VY);
     }
 
     fn ball_centre(&self) -> f32 {
@@ -179,9 +175,9 @@ impl Pong {
 
     fn paddle_collisions(&mut self) -> PongEvent {
         // Ball moving left (to agent)
-        if self.ball_vx < 0.0 {
+        if self.ball_vx < 0.0
             // Check: if ball touching paddle
-            if self.ball_x <= self.agent_paddle.paddle_x + PADDLEWIDTH &&
+            && self.ball_x <= self.agent_paddle.paddle_x + PADDLEWIDTH &&
             self.ball_x >= self.agent_paddle.paddle_x &&
             self.ball_y >= self.agent_paddle.paddle_y - BALLSIZE &&
             self.ball_y <= self.agent_paddle.paddle_y + PADDLEHEIGHT {
@@ -196,11 +192,10 @@ impl Pong {
 
                 // Agent hit ball
                 return PongEvent::AgentHit;
-            }
         }
         // Ball moving right (to opponent)
-        if self.ball_vx > 0.0 {
-            if self.ball_x + BALLSIZE >= self.opp_paddle.paddle_x &&
+        if self.ball_vx > 0.0
+            && self.ball_x + BALLSIZE >= self.opp_paddle.paddle_x &&
             self.ball_x + BALLSIZE <= self.opp_paddle.paddle_x + PADDLEWIDTH &&
             self.ball_y >= self.opp_paddle.paddle_y - BALLSIZE &&
             self.ball_y <= self.opp_paddle.paddle_y + PADDLEHEIGHT {
@@ -214,7 +209,6 @@ impl Pong {
 
                 return PongEvent::OppHit
             }
-        }
         PongEvent::None
     }
 
@@ -260,7 +254,7 @@ impl Environment for Pong {
     }
 
     fn step(&mut self, action: usize) -> StepResult {
-        let reward: f32;
+        
         let pong_action_option = PongAction::try_from(action);
         let pong_action = match pong_action_option {
             Ok(action) => action,
@@ -284,7 +278,7 @@ impl Environment for Pong {
 
         let event = self.event_step();
 
-        reward = match event {
+        let reward: f32 = match event {
             PongEvent::AgentHit => HITREWARD,
             PongEvent::OppHit => 0.0,
             PongEvent::AgentScore => SCOREREWARD,
